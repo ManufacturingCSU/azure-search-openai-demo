@@ -70,7 +70,7 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_OPENAI_SERVICE: cognitiveServices.outputs.name
+      AZURE_OPENAI_SERVICE: cognitiveServicesAccountName
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
@@ -79,42 +79,42 @@ module backend 'core/host/appservice.bicep' = {
   }
 }
 
-module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
-  scope: rg
-  name: 'openai'
-  params: {
-    name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-    location: location
-    tags: tags
-    sku: {
-      name: cognitiveServicesSkuName
-    }
-    deployments: [
-      {
-        name: gptDeploymentName
-        model: {
-          format: 'OpenAI'
-          name: gptModelName
-          version: '1'
-        }
-        scaleSettings: {
-          scaleType: 'Standard'
-        }
-      }
-      {
-        name: chatGptDeploymentName
-        model: {
-          format: 'OpenAI'
-          name: chatGptModelName
-          version: '0301'
-        }
-        scaleSettings: {
-          scaleType: 'Standard'
-        }
-      }
-    ]
-  }
-}
+// module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
+//   scope: rg
+//   name: 'openai'
+//   params: {
+//     name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+//     location: location
+//     tags: tags
+//     sku: {
+//       name: cognitiveServicesSkuName
+//     }
+//     deployments: [
+//       {
+//         name: gptDeploymentName
+//         model: {
+//           format: 'OpenAI'
+//           name: gptModelName
+//           version: '1'
+//         }
+//         scaleSettings: {
+//           scaleType: 'Standard'
+//         }
+//       }
+//       {
+//         name: chatGptDeploymentName
+//         model: {
+//           format: 'OpenAI'
+//           name: chatGptModelName
+//           version: '0301'
+//         }
+//         scaleSettings: {
+//           scaleType: 'Standard'
+//         }
+//       }
+//     ]
+//   }
+// }
 
 module searchServices 'core/search/search-services.bicep' = {
   scope: rg
@@ -242,7 +242,7 @@ module searchRoleBackend 'core/security/role.bicep' = {
 }
 
 output AZURE_LOCATION string = location
-output AZURE_OPENAI_SERVICE string = cognitiveServices.outputs.name
+output AZURE_OPENAI_SERVICE string = cognitiveServicesAccountName
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
