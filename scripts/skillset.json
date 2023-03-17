@@ -1,0 +1,13 @@
+{   
+  "name" : (optional on PUT; required on POST) "Name of the skillset",  
+  "description" : (optional) "Anything you want, or nothing at all",   
+  "skills" : (required) ["An array of skills. Each skill has an odata.type, name, input and output parameters"],
+  "cognitiveServices": 
+      {
+        "@odata.type": "#Microsoft.Azure.Search.CognitiveServicesByKey",
+        "description": "Optional. Anything you want, or null",
+        "key": "<YOUR-COGNITIVE-SERVICES-ALL-IN-ONE-KEY>"
+      },
+  "knowledgeStore": (optional) { ... },
+  "encryptionKey": (optional) { }
+} 

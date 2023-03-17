@@ -10,6 +10,7 @@ param environmentName string
 param location string
 
 param cognitiveServicesAccountName string = ''
+param functionAppName string = ''
 param cognitiveServicesSkuName string = 'S0'
 param appServicePlanName string = ''
 param resourceGroupName string = ''
@@ -221,6 +222,16 @@ module openAiRoleBackend 'core/security/role.bicep' = {
   }
 }
 
+module functionApp 'core/azure-function/af.bicep' = {
+  scope: rg
+  name: 'custom-skill'
+  params: {
+    appName: !empty(functionAppName) ? functionAppName : 'gptkb-function-${resourceToken}'
+    location: location
+    appInsightsLocation: location
+  }
+}
+
 module storageRoleBackend 'core/security/role.bicep' = {
   scope: rg
   name: 'storage-role-backend'
@@ -242,6 +253,8 @@ module searchRoleBackend 'core/security/role.bicep' = {
 }
 
 output AZURE_LOCATION string = location
+output FUNCTION_APP_NAME string = functionApp.outputs.functionName 
+output AZURE_RESOURCE_GROUP string = rg.outputs
 output AZURE_OPENAI_SERVICE string = cognitiveServicesAccountName
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
