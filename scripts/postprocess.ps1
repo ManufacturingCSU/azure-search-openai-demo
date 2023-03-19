@@ -14,8 +14,20 @@ $connstring = az storage account show-connection-string --name $env:azure_storag
 $searchKeys = az search admin-key show --resource-group $env:AZURE_RESOURCE_GROUP --service-name $env:AZURE_SEARCH_SERVICE -o tsv
 $searchKey = $searchKeys.split("`t")[0]
 
-Write-Host "Creating search index"
+$appKeys = az functionapp keys list --name $env:FUNCTION_APP_NAME --resource-group $env:AZURE_RESOURCE_GROUP -o tsv
+$appKey = $appKeys.split("`t")[0]
+
+Write-Host "Creating search indices"
 python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
+
+python ./scripts/create_document_index.py `
+  --searchservice $env:AZURE_SEARCH_SERVICE `
+  --index $env:AZURE_DOCUMENT_SEARCH_INDEX `
+  --searchkey $searchKey `
+  --container $env:AZURE_SOURCE_STORAGE_CONTAINER `
+  --connection_string $connstring `
+  --function_app_name $env:FUNCTION_APP_NAME `
+  --function_key $appKey
 
 Write-Host "Publishing FunctionApp"
                          
