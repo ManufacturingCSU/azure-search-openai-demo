@@ -9,8 +9,12 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
-param openAiServiceName string = ''
-param openAiResourceGroup string = ''
+param openAiServiceName string
+param openAiResourceGroup string
+param gptDeploymentName string = 'davinci'
+param gptModelName string = 'text-davinci-003'
+param chatGptDeploymentName string = 'chat'
+param chatGptModelName string = 'gpt-35-turbo'
 param functionAppName string = ''
 param openAiSkuName string = 'S0'
 param appServicePlanName string = ''
@@ -22,10 +26,6 @@ param storageAccountName string = ''
 param containerName string = 'content'
 param inputContainerName string = 'raw'
 param searchIndexName string = 'gptkbindex'
-param gptDeploymentName string = 'davinci'
-param gptModelName string = 'text-davinci-003'
-param chatGptDeploymentName string = 'chat'
-param chatGptModelName string = 'gpt-35-turbo'
 
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
@@ -297,4 +297,5 @@ output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = containerName
+output AZURE_SOURCE_STORAGE_CONTAINER string = inputContainerName
 output BACKEND_URI string = backend.outputs.uri

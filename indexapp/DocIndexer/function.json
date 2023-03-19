@@ -5,7 +5,7 @@
       "name": "myblob",
       "type": "blobTrigger",
       "direction": "in",
-      "path": "%AZURE_RAW_STORAGE_PATH%",
+      "path": "%AZURE_SOURCE_STORAGE_PATH%",
       "connection": "DOCUMENT_CONNECTION_STRING"
     }
   ]

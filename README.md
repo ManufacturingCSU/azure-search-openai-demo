@@ -1,5 +1,28 @@
 # ChatGPT + Enterprise data with Azure OpenAI and Cognitive Search
 
+## Fork Information
+
+This repository modifies the demo application hosted at [https://github.com/Azure-Samples/azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo). It is the intent of this project to continually incorporate any upstream changes along with the original additions made in this fork, but there may delays and conflicts in this process.
+
+## Project Additions
+Current additional modifications provided in this project:
+
+1. Requirement for existing OpenAI deployment
+2. Index source documents hosted in Azure Blob Storage (Defaults to 'raw' container within created Azure Storage Account)
+3. On-going indexing and index administration through an Azure FunctionApp
+
+## Additional Setup
+The use of an existing OpenAI deployment requires the deploying user to set four environmental variables.
+
+```
+azd env set AZURE_OPENAI_SERVICE <YOUR_OPENAI_SERVICE_NAME>
+azd env set AZURE_OPENAI_CHATGPT_DEPLOYMENT <YOUR_OPENAI_CHATPGT_DEPLOYMENT>
+azd env set AZURE_OPENAI_GPT_DEPLOYMENT <YOUR_OPENAI_GPT_DEPLOYMENT>
+azd env set AZURE_OPENAI_RESOURCE_GROUP <YOUR_OPENAI_RESOURCE_GROUP>
+```
+
+# Upstream Documentation
+
 This sample demonstrates a few approaches for creating ChatGPT-like experiences over your own data using the Retrieval Augmented Generation pattern. It uses Azure OpenAI Service to access the ChatGPT model (gpt-35-turbo), and Azure Cognitive Search for data indexing and retrieval.
 
 The repo includes sample data so it's ready to try end to end. In this sample application we use a fictitious company called Contoso Electronics, and the experience allows its employees to ask questions about the benefits, internal policies, as well as job descriptions and roles.
