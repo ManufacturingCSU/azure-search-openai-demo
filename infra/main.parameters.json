@@ -14,8 +14,20 @@
     "cognitiveServicesAccountName": {
       "value": "${AZURE_OPENAI_SERVICE}"
     },
+    "cognitiveServicesResourceGroup": {
+      "value": "${AZURE_OPENAI_RESOURCE_GROUP}"
+    },
+    "chatGptDeploymentName": {
+      "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT}"
+    },
+    "gptDeploymentName": {
+      "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT}"
+    },
     "searchServiceName": {
       "value": "${AZURE_SEARCH_SERVICE}"
+    },
+    "resourceGroupName": {
+      "value": "rg-openaisearch"
     },
     "cognitiveServicesSkuName": {
       "value": "S0"
