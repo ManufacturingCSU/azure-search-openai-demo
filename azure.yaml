@@ -11,7 +11,7 @@ services:
 hooks:
     postprovision:
       shell: pwsh
-      run: ./scripts/prepdocs.ps1
+      run: ./scripts/postprocess.ps1
       interactive: true
       continueOnError: false
     predeploy:

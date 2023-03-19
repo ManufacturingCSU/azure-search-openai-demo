@@ -8,9 +8,15 @@ from pypdf import PdfReader, PdfWriter
 from azure.identity import DefaultAzureCredential
 from azure.core.credentials import AzureKeyCredential
 from azure.storage.blob import BlobServiceClient
-from azure.search.documents.indexes import SearchIndexClient
+from azure.search.documents.indexes import SearchIndexClient, SearchIndexerClient
 from azure.search.documents.indexes.models import *
 from azure.search.documents import SearchClient
+from azure.search.documents.indexes.models import (
+    SearchIndexerDataContainer, SearchIndex, SearchIndexer, SimpleField, SearchFieldDataType,
+    EntityRecognitionSkill, InputFieldMappingEntry, OutputFieldMappingEntry, SearchIndexerSkillset,
+    CorsOptions, IndexingSchedule, SearchableField, IndexingParameters, SearchIndexerDataSourceConnection,
+    OcrSkill, WebApiSkill
+)
 
 MAX_SECTION_LENGTH = 1000
 SENTENCE_SEARCH_LIMIT = 100
@@ -25,6 +31,7 @@ parser.add_argument("--category", help="Value for the category field in the sear
 parser.add_argument("--skipblobs", action="store_true", help="Skip uploading individual pages to Azure Blob Storage")
 parser.add_argument("--storageaccount", help="Azure Blob Storage account name")
 parser.add_argument("--container", help="Azure Blob Storage container name")
+parser.add_argument("--connection_string", help="Azure Blob Storage account name")
 parser.add_argument("--storagekey", required=False, help="Optional. Use this Azure Blob Storage account key instead of the current user identity to login (use az login to set current user for Azure)")
 parser.add_argument("--searchservice", help="Name of the Azure Cognitive Search service where content should be indexed (must exist already)")
 parser.add_argument("--index", help="Name of the Azure Cognitive Search index where content should be indexed (will be created if it doesn't exist)")
@@ -141,7 +148,8 @@ def create_sections(filename, pages):
 
 def create_search_index():
     if args.verbose: print(f"Ensuring search index {args.index} exists")
-    index_client = SearchIndexClient(endpoint=f"https://{args.searchservice}.search.windows.net/",
+    endpoint = f"https://{args.searchservice}.search.windows.net/"
+    index_client = SearchIndexClient(endpoint=endpoint,
                                      credential=search_creds)
     if args.index not in index_client.list_index_names():
         index = SearchIndex(
@@ -161,6 +169,54 @@ def create_search_index():
         )
         if args.verbose: print(f"Creating {args.index} search index")
         index_client.create_index(index)
+        
+        indexers_client = SearchIndexerClient(endpoint, search_creds)
+
+        container = SearchIndexerDataContainer(name='searchcontainer')
+        data_source_connection = SearchIndexerDataSourceConnection(
+            name="indexer-datasource",
+            type="azureblob",
+            connection_string=args.connection_string,
+            container=container
+        )
+        data_source = indexers_client.create_data_source_connection(data_source_connection)
+
+        # inp = InputFieldMappingEntry(name="file", source="/document")
+        # output = OutputFieldMappingEntry(name="dateTimes", target_name="RenovatedDate")
+        # s = OcrSkill(name="ocr-skill", inputs=[inp], outputs=[output])
+        path = InputFieldMappingEntry(name= "formUrl", source = "/document/metadata_storage_path")
+        token = InputFieldMappingEntry(name="formSasToken", source = "/document/metadata_storage_sas_token")
+        output = OutputFieldMappingEntry(name="dateTimes", target_name="RenovatedDate")
+        doc_id = OutputFieldMappingEntry(name="id", target_name="id")
+        content = OutputFieldMappingEntry(name="content", target_name="content")
+        category = OutputFieldMappingEntry(name="category", target_name="category")
+        sourcepage = OutputFieldMappingEntry(name="sourcepage", target_name="sourcepage")
+        sourcefile = OutputFieldMappingEntry(name="sourcefile", target_name="sourcefile")
+        outputs = [doc_id, content, category, sourcepage, sourcefile]
+        s = WebApiSkill(
+            name="semantic-search-skill", 
+            inputs=[path, token], 
+            outputs=outputs,
+            uri=f"https://{args.function_name}.net/api/GPTIndexer",
+            http_method="POST",
+            authResourceId=""
+        )
+
+        skillset = SearchIndexerSkillset(name='search-data-skill', skills=[s], description="example skillset")
+        result = indexers_client.create_skillset(skillset)
+
+        # create an indexer
+        # create an indexer
+        indexer = SearchIndexer(
+            name="sample-indexer",
+            data_source_name="indexer-datasource",
+            target_index_name="indexer-hotels",
+            skillset_name="search-data-skill"
+        )
+        result = indexers_client.create_indexer(indexer)
+        print("Create new Indexer - sample-indexer")
+        # [END create_indexer]
+
     else:
         if args.verbose: print(f"Search index {args.index} already exists")
 

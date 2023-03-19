@@ -9,8 +9,14 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
-param cognitiveServicesAccountName string = ''
-param cognitiveServicesSkuName string = 'S0'
+param openAiServiceName string
+param openAiResourceGroup string
+param gptDeploymentName string = 'davinci'
+param gptModelName string = 'text-davinci-003'
+param chatGptDeploymentName string = 'chat'
+param chatGptModelName string = 'gpt-35-turbo'
+param functionAppName string = ''
+param openAiSkuName string = 'S0'
 param appServicePlanName string = ''
 param resourceGroupName string = ''
 param backendServiceName string = ''
@@ -18,11 +24,8 @@ param searchServicesName string = ''
 param searchServicesSkuName string = 'standard'
 param storageAccountName string = ''
 param containerName string = 'content'
+param inputContainerName string = 'raw'
 param searchIndexName string = 'gptkbindex'
-param gptDeploymentName string = 'davinci'
-param gptModelName string = 'text-davinci-003'
-param chatGptDeploymentName string = 'chat'
-param chatGptModelName string = 'gpt-35-turbo'
 
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
@@ -70,7 +73,7 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_OPENAI_SERVICE: cognitiveServicesAccountName
+      AZURE_OPENAI_SERVICE: openAiServiceName
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
@@ -79,15 +82,25 @@ module backend 'core/host/appservice.bicep' = {
   }
 }
 
+resource rgCognitiveServices 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
+  name: openAiResourceGroup
+}
+
+resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2022-10-01' existing = {
+  name: openAiServiceName
+  scope: resourceGroup(openAiResourceGroup)
+}
+
+
 // module cognitiveServices 'core/ai/cognitiveservices.bicep' = {
 //   scope: rg
 //   name: 'openai'
 //   params: {
-//     name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+//     name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
 //     location: location
 //     tags: tags
 //     sku: {
-//       name: cognitiveServicesSkuName
+//       name: openAiSkuName
 //     }
 //     deployments: [
 //       {
@@ -152,7 +165,11 @@ module storage 'core/storage/storage-account.bicep' = {
     }
     containers: [
       {
-        name: 'content'
+        name: containerName
+        publicAccess: 'None'
+      }
+      {
+        name: inputContainerName
         publicAccess: 'None'
       }
     ]
@@ -161,7 +178,7 @@ module storage 'core/storage/storage-account.bicep' = {
 
 // USER ROLES
 module openAiRoleUser 'core/security/role.bicep' = {
-  scope: rg
+  scope: rgCognitiveServices
   name: 'openai-role-user'
   params: {
     principalId: principalId
@@ -190,6 +207,26 @@ module storageContribRoleUser 'core/security/role.bicep' = {
   }
 }
 
+module storageRoleFunction 'core/security/role.bicep' = {
+  scope: rg
+  name: 'storage-role-function'
+  params: {
+    principalId: functionApp.outputs.identityPrincipalId
+    roleDefinitionId: '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1'
+    principalType: 'ServicePrincipal'
+  }
+}
+
+module storageContribRoleFunction 'core/security/role.bicep' = {
+  scope: rg
+  name: 'storage-contribrole-function'
+  params: {
+    principalId: functionApp.outputs.identityPrincipalId
+    roleDefinitionId: 'ba92f5b4-2d11-453d-a403-e96b0029c9fe'
+    principalType: 'ServicePrincipal'
+  }
+}
+
 module searchRoleUser 'core/security/role.bicep' = {
   scope: rg
   name: 'search-role-user'
@@ -212,12 +249,23 @@ module searchContribRoleUser 'core/security/role.bicep' = {
 
 // SYSTEM IDENTITIES
 module openAiRoleBackend 'core/security/role.bicep' = {
-  scope: rg
+  scope:  rgCognitiveServices
   name: 'openai-role-backend'
   params: {
     principalId: backend.outputs.identityPrincipalId
     roleDefinitionId: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
     principalType: 'ServicePrincipal'
+  }
+}
+
+module functionApp 'core/azure-function/af.bicep' = {
+  scope: rg
+  name: 'custom-skill'
+  params: {
+    functionAppName: !empty(functionAppName) ? functionAppName : 'gptkb-function-${resourceToken}'
+    location: location
+    appInsightsLocation: location
+    linuxFxVersion: 'python|3.9'
   }
 }
 
@@ -242,9 +290,12 @@ module searchRoleBackend 'core/security/role.bicep' = {
 }
 
 output AZURE_LOCATION string = location
-output AZURE_OPENAI_SERVICE string = cognitiveServicesAccountName
+output FUNCTION_APP_NAME string = functionApp.outputs.functionName 
+output AZURE_RESOURCE_GROUP string = rg.name
+output AZURE_OPENAI_SERVICE string = openAiServiceName
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = containerName
+output AZURE_SOURCE_STORAGE_CONTAINER string = inputContainerName
 output BACKEND_URI string = backend.outputs.uri

@@ -1,0 +1,12 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "myblob",
+      "type": "blobTrigger",
+      "direction": "in",
+      "path": "%AZURE_SOURCE_STORAGE_PATH%",
+      "connection": "DOCUMENT_CONNECTION_STRING"
+    }
+  ]
+}
