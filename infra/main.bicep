@@ -9,10 +9,10 @@ param environmentName string
 @description('Primary location for all resources')
 param location string
 
-param cognitiveServicesAccountName string = ''
-param cognitiveServicesResourceGroup string = ''
+param openAiServiceName string = ''
+param openAiResourceGroup string = ''
 param functionAppName string = ''
-param cognitiveServicesSkuName string = 'S0'
+param openAiSkuName string = 'S0'
 param appServicePlanName string = ''
 param resourceGroupName string = ''
 param backendServiceName string = ''
@@ -73,7 +73,7 @@ module backend 'core/host/appservice.bicep' = {
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_OPENAI_SERVICE: cognitiveServicesAccountName
+      AZURE_OPENAI_SERVICE: openAiServiceName
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
@@ -83,12 +83,12 @@ module backend 'core/host/appservice.bicep' = {
 }
 
 resource rgCognitiveServices 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
-  name: cognitiveServicesResourceGroup
+  name: openAiResourceGroup
 }
 
 resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2022-10-01' existing = {
-  name: cognitiveServicesAccountName
-  scope: resourceGroup(cognitiveServicesResourceGroup)
+  name: openAiServiceName
+  scope: resourceGroup(openAiResourceGroup)
 }
 
 
@@ -96,11 +96,11 @@ resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2022-10-01' exi
 //   scope: rg
 //   name: 'openai'
 //   params: {
-//     name: !empty(cognitiveServicesAccountName) ? cognitiveServicesAccountName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+//     name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
 //     location: location
 //     tags: tags
 //     sku: {
-//       name: cognitiveServicesSkuName
+//       name: openAiSkuName
 //     }
 //     deployments: [
 //       {
@@ -292,7 +292,7 @@ module searchRoleBackend 'core/security/role.bicep' = {
 output AZURE_LOCATION string = location
 output FUNCTION_APP_NAME string = functionApp.outputs.functionName 
 output AZURE_RESOURCE_GROUP string = rg.name
-output AZURE_OPENAI_SERVICE string = cognitiveServicesAccountName
+output AZURE_OPENAI_SERVICE string = openAiServiceName
 output AZURE_SEARCH_INDEX string = searchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name

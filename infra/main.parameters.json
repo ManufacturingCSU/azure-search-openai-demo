@@ -11,10 +11,10 @@
     "principalId": {
       "value": "${AZURE_PRINCIPAL_ID}"
     },
-    "cognitiveServicesAccountName": {
+    "openAiServiceName": {
       "value": "${AZURE_OPENAI_SERVICE}"
     },
-    "cognitiveServicesResourceGroup": {
+    "openAiResourceGroup": {
       "value": "${AZURE_OPENAI_RESOURCE_GROUP}"
     },
     "chatGptDeploymentName": {
@@ -29,7 +29,7 @@
     "resourceGroupName": {
       "value": "rg-openaisearch"
     },
-    "cognitiveServicesSkuName": {
+    "openAiSkuName": {
       "value": "S0"
     },
     "searchServicesSkuName": {
