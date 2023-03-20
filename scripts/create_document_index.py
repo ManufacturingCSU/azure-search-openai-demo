@@ -17,6 +17,7 @@ from azure.search.documents.indexes.models import (
     SearchIndex,
     SearchIndexer,
     SimpleField,
+    SearchableField,
     ComplexField,
     SearchFieldDataType,
     EntityRecognitionSkill,
@@ -72,6 +73,10 @@ parser.add_argument(
     "--function_key",
     help="API key for Azure Function",
 )
+parser.add_argument(
+    "--indexer_name", default="openai-indexer", help="Name of Cognitive Search indexer."
+)
+parser.add_argument("--skillset_name", default="openai-data-skill")
 args = parser.parse_args()
 
 # Use the current user identity to connect to Azure services unless a key is explicitly set for any of them
@@ -88,6 +93,7 @@ def create_search_index():
         index = SearchIndex(
             name=args.index,
             fields=[
+                SimpleField(name="id", type="Edm.String", key=True),
                 SearchableField(
                     name="content", type="Edm.String", analyzer_name="en.microsoft"
                 ),
@@ -103,7 +109,7 @@ def create_search_index():
                     name="author",
                     type="Edm.String",
                 ),
-                ComplexField(
+                SearchableField(
                     name="keywords",
                     collection=True,
                     type="Edm.String",
@@ -128,40 +134,55 @@ def create_search_index():
         result = index_client.create_index(index)
     return result
 
+
 def create_datasource():
     # Here we create a datasource. As mentioned in the description we have stored it in
     # "searchcontainer"
     ds_client = SearchIndexerClient(endpoint, search_creds)
-    container = SearchIndexerDataContainer(name=args.container)
-    datasource_name = args.datasource_name if args.datasource_name is not None else args.container + "-datasource"
-    data_source_connection = SearchIndexerDataSourceConnection(
-        name=datasource_name,
-        type="azureblob",
-        connection_string=args.connection_string,
-        container=container
+    datasource_name = (
+        args.datasource_name
+        if args.datasource_name is not None
+        else args.container + "-datasource"
     )
-    data_source = ds_client.create_data_source_connection(data_source_connection)
+    if datasource_name not in ds_client.get_data_source_connection_names():
+        container = SearchIndexerDataContainer(name=args.container)
+        data_source_connection = SearchIndexerDataSourceConnection(
+            name=datasource_name,
+            type="azureblob",
+            connection_string=args.connection_string,
+            container=container,
+        )
+        data_source = ds_client.create_data_source_connection(data_source_connection)
+    else:
+        data_source = ds_client.get_data_source_connection(datasource_name)
     return data_source
+
 
 def create_skillset():
     client = SearchIndexerClient(endpoint, search_creds)
-    inp = InputFieldMappingEntry(name="text", source="/document/content")
-    summary = OutputFieldMappingEntry(name="summary", target_name="summary")
-    keywords = OutputFieldMappingEntry(name="keywords", target_name="keywords")
-    title = OutputFieldMappingEntry(name="title", target_name="title")
-    author = OutputFieldMappingEntry(name="author", target_name="author")
-    outputs = [summary, keywords, title, author]
-    s = WebApiSkill(
-        name="openai-skill",
-        uri=f"https://{args.function_app_name}.azurewebsites.net/api/OpenAISkill",
-        http_headers={"x-functions-key": args.function_key},
-        http_method="POST",
-        inputs=[inp],
-        outputs=outputs
-    )
-    skillset = SearchIndexerSkillset(name='openai-data-skill', skills=[s], description="Document search skillset")
-    result = client.create_skillset(skillset)
+    if args.skillset_name not in client.get_skillset_names():
+        inp = InputFieldMappingEntry(name="text", source="/document/content")
+        summary = OutputFieldMappingEntry(name="summary", target_name="summary")
+        keywords = OutputFieldMappingEntry(name="keywords", target_name="keywords")
+        title = OutputFieldMappingEntry(name="title", target_name="title")
+        author = OutputFieldMappingEntry(name="author", target_name="author")
+        outputs = [summary, keywords, title, author]
+        s = WebApiSkill(
+            name="openai-skill",
+            uri=f"https://{args.function_app_name}.azurewebsites.net/api/OpenAISkill",
+            http_headers={"x-functions-key": args.function_key},
+            http_method="POST",
+            inputs=[inp],
+            outputs=outputs,
+        )
+        skillset = SearchIndexerSkillset(
+            name=args.skillset_name, skills=[s], description="Document search skillset"
+        )
+        result = client.create_skillset(skillset)
+    else:
+        result = client.get_skillset(args.skillset_name)
     return result
+
 
 def create_indexer():
     skillset_name = create_skillset().name
@@ -176,18 +197,18 @@ def create_indexer():
     # we pass the data source, skillsets and targeted index to build an indexer
     parameters = IndexingParameters(configuration={"parsingMode": "jsonArray"})
     indexer = SearchIndexer(
-        name="hotel-data-indexer",
+        name=args.indexer_name,
         data_source_name=ds_name,
         target_index_name=ind_name,
         skillset_name=skillset_name,
-        parameters=parameters
+        parameters=parameters,
     )
 
     indexer_client = SearchIndexerClient(endpoint, search_creds)
-    indexer_client.create_indexer(indexer) # create the indexer
+    indexer_client.create_indexer(indexer)  # create the indexer
 
     # to get an indexer
-    result = indexer_client.get_indexer("hotel-data-indexer")
+    result = indexer_client.get_indexer(args.indexer_name)
     print(result)
 
     # To run an indexer, we can use run_indexer()
@@ -203,5 +224,6 @@ def create_indexer():
 
     # get the status of an indexer
     indexer_client.get_indexer_status(updated_indexer.name)
+
 
 create_indexer()

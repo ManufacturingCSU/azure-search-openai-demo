@@ -26,6 +26,7 @@ param storageAccountName string = ''
 param containerName string = 'content'
 param inputContainerName string = 'raw'
 param searchIndexName string = 'gptkbindex'
+param documentSearchIndexName string = 'gptdocindex'
 
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
@@ -74,6 +75,7 @@ module backend 'core/host/appservice.bicep' = {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
       AZURE_OPENAI_SERVICE: openAiServiceName
+      AZURE_DOCUMENT_SEARCH_INDEX: documentSearchIndexName
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchServices.outputs.name
       AZURE_OPENAI_GPT_DEPLOYMENT: gptDeploymentName
@@ -293,7 +295,8 @@ output AZURE_LOCATION string = location
 output FUNCTION_APP_NAME string = functionApp.outputs.functionName 
 output AZURE_RESOURCE_GROUP string = rg.name
 output AZURE_OPENAI_SERVICE string = openAiServiceName
-output AZURE_SEARCH_INDEX string = searchIndexName
+output AZURE_CHAT_SEARCH_INDEX string = searchIndexName
+output AZURE_DOCUMENT_SEARCH_INDEX string = documentSearchIndexName
 output AZURE_SEARCH_SERVICE string = searchServices.outputs.name
 output AZURE_STORAGE_ACCOUNT string = storage.outputs.name
 output AZURE_STORAGE_CONTAINER string = containerName

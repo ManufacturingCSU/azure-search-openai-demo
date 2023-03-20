@@ -4,7 +4,6 @@ $output = azd env get-values
 foreach ($line in $output) {
   $name, $value = $line.Split("=")
   $value = $value -replace '^\"|\"$'
-  Write-Host $name $value
   [Environment]::SetEnvironmentVariable($name, $value)
 }
 
@@ -14,20 +13,27 @@ $connstring = az storage account show-connection-string --name $env:azure_storag
 $searchKeys = az search admin-key show --resource-group $env:AZURE_RESOURCE_GROUP --service-name $env:AZURE_SEARCH_SERVICE -o tsv
 $searchKey = $searchKeys.split("`t")[0]
 
+# functionapp keys list showing intermittent 'Bad Request' failures
+# https://github.com/Azure/Azure-Functions/issues/2221
+$appKey = $null
 $appKeys = az functionapp keys list --name $env:FUNCTION_APP_NAME --resource-group $env:AZURE_RESOURCE_GROUP -o tsv
-$appKey = $appKeys.split("`t")[0]
+$numRetries = 0
+while (($null -eq $appKey) -and ($numRetries -lt 4)) {
+  try {
+    foreach ($key in $appKeys.split("`t")) {
+      if ($key.length -gt 0) {
+        $appKey = $key
+        break
+      }
+    }
+  } catch {
+    $numRetries++
+    $appKeys = az functionapp keys list --name $env:FUNCTION_APP_NAME --resource-group $env:AZURE_RESOURCE_GROUP -o tsv
+    Start-Sleep -Seconds 2
+    continue
+  }
+}
 
-Write-Host "Creating search indices"
-python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
-
-python ./scripts/create_document_index.py `
-  --searchservice $env:AZURE_SEARCH_SERVICE `
-  --index $env:AZURE_DOCUMENT_SEARCH_INDEX `
-  --searchkey $searchKey `
-  --container $env:AZURE_SOURCE_STORAGE_CONTAINER `
-  --connection_string $connstring `
-  --function_app_name $env:FUNCTION_APP_NAME `
-  --function_key $appKey
 
 Write-Host "Publishing FunctionApp"
                          
@@ -47,6 +53,21 @@ try {
 } finally {
   Set-Location ..
 }
+
+
+Write-Host "Creating search indices"
+
+python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
+
+python ./scripts/create_document_index.py `
+  --searchservice $env:AZURE_SEARCH_SERVICE `
+  --index $env:AZURE_DOCUMENT_SEARCH_INDEX `
+  --searchkey $searchKey `
+  --container $env:AZURE_SOURCE_STORAGE_CONTAINER `
+  --connection_string $connstring `
+  --function_app_name $env:FUNCTION_APP_NAME `
+  --function_key $appKey
+
 
 
 Write-Host "Uploading local data"
