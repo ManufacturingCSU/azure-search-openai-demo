@@ -38,6 +38,13 @@
             "console": "integratedTerminal",
         },
         {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:5000",
+            "webRoot": "${workspaceFolder}/app/frontend/src"
+        },
+        {
             "name": "Frontend: build",
             "type": "node",
             "request": "launch",

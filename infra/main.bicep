@@ -27,6 +27,12 @@ param containerName string = 'content'
 param inputContainerName string = 'raw'
 param searchIndexName string = 'gptkbindex'
 
+// Authentication Config
+param authClientId string
+@secure()
+param authClientSecret string
+param authTenantId string
+
 @description('Id of the user or app to assign application roles')
 param principalId string = ''
 
@@ -70,6 +76,9 @@ module backend 'core/host/appservice.bicep' = {
     runtimeVersion: '3.10'
     scmDoBuildDuringDeployment: true
     managedIdentity: true
+    authClientId: authClientId
+    authClientSecret: authClientSecret
+    authIssuerURI: 'https://sts.windows.net/${authTenantId}/v2.0'
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName

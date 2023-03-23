@@ -21,6 +21,13 @@ azd env set AZURE_OPENAI_GPT_DEPLOYMENT <YOUR_OPENAI_GPT_DEPLOYMENT>
 azd env set AZURE_OPENAI_RESOURCE_GROUP <YOUR_OPENAI_RESOURCE_GROUP>
 ```
 
+This application additional requires frontend authentication. This may be a multi-step process depending on internal approval processes for app registrations.
+
+1. Expose an API -> Application ID URI
+2. Scopes -> Add a scope -> user_impersonation
+
+https://<WEBAPP_NAME>.azurewebsites.net/.auth/login/aad/callback
+
 # Upstream Documentation
 
 This sample demonstrates a few approaches for creating ChatGPT-like experiences over your own data using the Retrieval Augmented Generation pattern. It uses Azure OpenAI Service to access the ChatGPT model (gpt-35-turbo), and Azure Cognitive Search for data indexing and retrieval.

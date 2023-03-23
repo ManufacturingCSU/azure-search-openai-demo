@@ -29,6 +29,15 @@
     "resourceGroupName": {
       "value": "rg-openaisearch"
     },
+    "authClientId": {
+      "value": "${AZURE_CLIENT_ID}"
+    },
+    "authClientSecret": {
+      "value": "${AZURE_CLIENT_SECRET}"
+    },
+    "authTenantId": {
+      "value": "${AZURE_TENANT_ID}"
+    },
     "openAiSkuName": {
       "value": "S0"
     },
