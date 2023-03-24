@@ -27,6 +27,8 @@ param functionWorkerRuntime string = 'python'
 @description('Required for Linux app to represent runtime stack in the format of \'runtime|runtimeVersion\'. For example: \'python|3.9\'')
 param linuxFxVersion string
 
+param formRecognizerService string
+
 var hostingPlanName = functionAppName
 var applicationInsightsName = functionAppName
 var storageAccountName = '${uniqueString(resourceGroup().id)}azfunctions'
@@ -93,6 +95,10 @@ resource functionApp 'Microsoft.Web/sites@2022-03-01' = {
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: functionWorkerRuntime
+        }
+        {
+          name: 'FORM_RECOGNIZER_SERVICE'
+          value: formRecognizerService
         }
       ]
     }
