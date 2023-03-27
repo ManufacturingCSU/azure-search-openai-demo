@@ -23,6 +23,18 @@
     "gptDeploymentName": {
       "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT}"
     },
+    "openAiResourceGroupName": {
+      "value": "${AZURE_OPENAI_RESOURCE_GROUP}"
+    },
+    "formRecognizerServiceName": {
+      "value": "${AZURE_FORMRECOGNIZER_SERVICE}"
+    },
+    "formRecognizerResourceGroupName": {
+      "value": "${AZURE_FORMRECOGNIZER_RESOURCE_GROUP}"
+    },
+    "formRecognizerSkuName": {
+      "value": "S0"
+    },
     "searchServiceName": {
       "value": "${AZURE_SEARCH_SERVICE}"
     },
@@ -30,19 +42,28 @@
       "value": "rg-openaisearch"
     },
     "authClientId": {
-      "value": "${AZURE_CLIENT_ID}"
+      "value": "${AUTH_CLIENT_ID}"
     },
     "authClientSecret": {
-      "value": "${AZURE_CLIENT_SECRET}"
+      "value": "${AUTH_CLIENT_SECRET}"
     },
     "authTenantId": {
-      "value": "${AZURE_TENANT_ID}"
+      "value": "${AUTH_TENANT_ID}"
     },
     "openAiSkuName": {
       "value": "S0"
     },
-    "searchServicesSkuName": {
+    "searchServiceResourceGroupName": {
+      "value": "${AZURE_SEARCH_SERVICE_RESOURCE_GROUP}"
+    },
+    "searchServiceSkuName": {
       "value": "standard"
+    },
+    "storageAccountName": {
+      "value": "${AZURE_STORAGE_ACCOUNT}"
+    },
+    "storageResourceGroupName": {
+      "value": "${AZURE_STORAGE_RESOURCE_GROUP}"
     }
   }
 }

@@ -12,18 +12,21 @@ interface Props {
     activeTab: AnalysisPanelTabs;
     onActiveTabChanged: (tab: AnalysisPanelTabs) => void;
     activeCitation: string | undefined;
+    activeCitationPage: number | undefined;
     citationHeight: string;
     answer: AskResponse;
 }
 
 const pivotItemDisabledStyle = { disabled: true, style: { color: "grey" } };
 
-export const AnalysisPanel = ({ answer, activeTab, activeCitation, citationHeight, className, onActiveTabChanged }: Props) => {
+export const AnalysisPanel = ({ answer, activeTab, activeCitation, activeCitationPage, citationHeight, className, onActiveTabChanged }: Props) => {
     const isDisabledThoughtProcessTab: boolean = !answer.thoughts;
     const isDisabledSupportingContentTab: boolean = !answer.data_points.length;
     const isDisabledCitationTab: boolean = !activeCitation;
 
     const sanitizedThoughts = DOMPurify.sanitize(answer.thoughts!);
+
+    const citationURL = activeCitationPage ? activeCitation+`#page=${activeCitationPage}` : activeCitation;
 
     return (
         <Pivot
@@ -50,7 +53,7 @@ export const AnalysisPanel = ({ answer, activeTab, activeCitation, citationHeigh
                 headerText="Citation"
                 headerButtonProps={isDisabledCitationTab ? pivotItemDisabledStyle : undefined}
             >
-                <iframe title="Citation" src={activeCitation} width="100%" height={citationHeight} />
+                <iframe title="Citation" src={citationURL} width="100%" height={citationHeight}/>
             </PivotItem>
         </Pivot>
     );
