@@ -114,7 +114,7 @@ module backend 'core/host/appservice.bicep' = {
     managedIdentity: true
     authClientId: authClientId
     authClientSecret: authClientSecret
-    authIssuerURI: 'https://sts.windows.net/${authTenantId}/v2.0'
+    authIssuerURI: environment().authentication.loginEndpoint
     appSettings: {
       AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
       AZURE_BLOB_STORAGE_CONTAINER: containerName
