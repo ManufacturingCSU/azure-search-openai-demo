@@ -17,6 +17,9 @@ $formKey = az cognitiveservices account keys list --name $env:AZURE_FORMRECOGNIZ
 $formKey = $formKey.split("`t")[0]
 
 
+$storageKey=$(az storage account keys list -g $env:AZURE_RESOURCE_GROUP -n $env:AZURE_STORAGE_ACCOUNT --query [0].value -o tsv)
+
+
 Write-Host "Creating search index"
 python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
 
@@ -48,3 +51,7 @@ $sasToken = az storage account generate-sas --permissions cdlruwap --account-nam
 
 pip install -r ./scripts/requirements.txt
 python ./scripts/upload_data.py './data/*' --storageaccount $env:AZURE_STORAGE_ACCOUNT --container raw --sas $sasToken
+
+Write-Host "Set local search key"
+azd env set AZURE_SEARCH_KEY $searchKey
+azd env set AZURE_STORAGE_KEY $storageKey
