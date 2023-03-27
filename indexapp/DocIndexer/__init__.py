@@ -248,5 +248,17 @@ def upload_blobs(filename, data):
     blob_container = blob_service.get_container_client(CONTAINER)
     if not blob_container.exists():
         blob_container.create_container()
-    blob_name = blob_name_from_file_page(filename)
-    blob_container.upload_blob(blob_name, data, overwrite=True)
+    if os.path.splitext(filename)[1].lower() == ".pdf":
+        reader = PdfReader(data)
+        pages = reader.pages
+        for i in range(len(pages)):
+            blob_name = blob_name_from_file_page(filename, i)
+            f = io.BytesIO()
+            writer = PdfWriter()
+            writer.add_page(pages[i])
+            writer.write(f)
+            f.seek(0)
+            blob_container.upload_blob(blob_name, f, overwrite=True)
+    else:
+        blob_name = blob_name_from_file_page(filename)
+        blob_container.upload_blob(blob_name, data, overwrite=True)
