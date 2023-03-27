@@ -13,6 +13,8 @@ Current additional modifications provided in this project:
 1. Requirement for existing OpenAI deployment
 2. Index source documents hosted in Azure Blob Storage (Defaults to 'raw' container within created Azure Storage Account)
 3. On-going indexing and index administration through an Azure FunctionApp
+4. Frontend authentication enabled by default
+5. Full source PDF display (rather than single page) in web app citation view
 
 ## Additional Setup
 The use of an existing OpenAI deployment requires the deploying user to set four environmental variables.
@@ -24,12 +26,14 @@ azd env set AZURE_OPENAI_GPT_DEPLOYMENT <YOUR_OPENAI_GPT_DEPLOYMENT>
 azd env set AZURE_OPENAI_RESOURCE_GROUP <YOUR_OPENAI_RESOURCE_GROUP>
 ```
 
-This application additional requires frontend authentication. This may be a multi-step process depending on internal approval processes for app registrations.
+This application enables Azure Active Directory authentication. This requires an Azure App Registration within the Azure tenant used for deployment. Please see this tutorial for more information on registering an application [Register Application](https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app). To be used for authenticating the app service, the application must have `User.Read` permissions. Once registered, the application client Id and client secret can be configured for the Bicep deployment below.
 
-1. Expose an API -> Application ID URI
-2. Scopes -> Add a scope -> user_impersonation
+```
+azd env set AUTH_CLIENT_ID <APP_CLIENT_ID>
+azd env set AUTH_CLIENT_SECRET <APP_CLIENT_SECRET>
+azd env set AUTH_TENANT_ID <APP_TENANT_ID>
+```
 
-https://<WEBAPP_NAME>.azurewebsites.net/.auth/login/aad/callback
 
 # Upstream Documentation
 
