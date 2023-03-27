@@ -340,7 +340,7 @@ module functionApp 'core/azure-function/af.bicep' = {
   name: 'custom-skill'
   params: {
     functionAppName: !empty(functionAppName) ? functionAppName : 'gptkb-function-${resourceToken}'
-    formRecognizerService: formrecognizer.name
+    formRecognizerService: formrecognizer.outputs.name
     location: location
     appInsightsLocation: location
     linuxFxVersion: 'python|3.9'

@@ -53,7 +53,8 @@ def main(myblob: func.InputStream):
     page_map = get_document_text(blob)
     sections = create_sections(os.path.basename(filename), page_map)
     index_sections(os.path.basename(filename), sections)
-    upload_blobs(filename)
+    blob.seek(0)
+    upload_blobs(filename, blob)
 
 
 def blob_name_from_file_page(filename, page=0):
@@ -239,7 +240,7 @@ def index_sections(filename, sections):
         succeeded = sum([1 for r in results if r.succeeded])
 
 
-def upload_blobs(filename):
+def upload_blobs(filename, data):
     blob_service = BlobServiceClient(
         account_url=f"https://{STORAGE_ACCOUNT}.blob.core.windows.net",
         credential=default_creds,
@@ -248,5 +249,4 @@ def upload_blobs(filename):
     if not blob_container.exists():
         blob_container.create_container()
     blob_name = blob_name_from_file_page(filename)
-    with open(filename, "rb") as data:
-        blob_container.upload_blob(blob_name, data, overwrite=True)
+    blob_container.upload_blob(blob_name, data, overwrite=True)
