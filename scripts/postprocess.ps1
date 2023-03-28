@@ -20,10 +20,10 @@ $formKey = $formKey.split("`t")[0]
 $storageKey=$(az storage account keys list -g $env:AZURE_RESOURCE_GROUP -n $env:AZURE_STORAGE_ACCOUNT --query [0].value -o tsv)
 
 
-Write-Host "Creating search index"
-python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
+# Write-Host "Creating search index"
+# python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
 
-Write-Host "Publishing FunctionApp"
+# Write-Host "Publishing FunctionApp"
                          
 az functionapp config appsettings set --name $env:FUNCTION_APP_NAME --resource-group $env:AZURE_RESOURCE_GROUP --settings `
   "DOCUMENT_SEARCH_INDEX=$env:AZURE_DOCUMENT_SEARCH_INDEX" `
@@ -36,22 +36,22 @@ az functionapp config appsettings set --name $env:FUNCTION_APP_NAME --resource-g
   "AZURE_STORAGE_ACCOUNT=$env:AZURE_STORAGE_ACCOUNT" `
   "FORM_RECOGNIZER_KEY=$formKey"
 
-Set-Location indexapp
-try {
-  func azure functionapp publish $env:FUNCTION_APP_NAME
-} finally {
-  Set-Location ..
-}
+# Set-Location indexapp
+# try {
+#   func azure functionapp publish $env:FUNCTION_APP_NAME --python
+# } finally {
+#   Set-Location ..
+# }
 
 
 Write-Host "Uploading local data"
-$ts = New-TimeSpan -Minutes 30
-$end = ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mmZ")
-$sasToken = az storage account generate-sas --permissions cdlruwap --account-name $env:AZURE_STORAGE_ACCOUNT --services b --resource-types sco --expiry $end -o tsv
+# $ts = New-TimeSpan -Minutes 30
+# $end = ((get-date) + $ts).ToUniversalTime().ToString("yyyy-MM-ddTHH:mmZ")
+# $sasToken = az storage account generate-sas --permissions cdlruwap --account-name $env:AZURE_STORAGE_ACCOUNT --services b --resource-types sco --expiry $end -o tsv
 
 pip install -r ./scripts/requirements.txt
-python ./scripts/upload_data.py './data/*' --storageaccount $env:AZURE_STORAGE_ACCOUNT --container raw --sas $sasToken
+python ./scripts/upload_data.py './data/*' --storageaccount $env:AZURE_STORAGE_ACCOUNT --container raw --storagekey $storageKey
 
-Write-Host "Set local search key"
-azd env set AZURE_SEARCH_KEY $searchKey
-azd env set AZURE_STORAGE_KEY $storageKey
+# Write-Host "Set local search key"
+# azd env set AZURE_SEARCH_KEY $searchKey
+# azd env set AZURE_STORAGE_KEY $storageKey

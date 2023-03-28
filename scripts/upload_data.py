@@ -3,6 +3,7 @@ import glob
 from pathlib import Path
 from azure.storage.blob import BlobServiceClient
 from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AzureNamedKeyCredential
 
 parser = argparse.ArgumentParser(
     description="Prepare documents by extracting content from PDFs, splitting content into sections, uploading to blob storage, and indexing in a search index.",
@@ -11,14 +12,20 @@ parser = argparse.ArgumentParser(
 parser.add_argument("files", help="Files to be processed")
 parser.add_argument("--storageaccount", help="Azure Blob Storage account name")
 parser.add_argument("--container", help="Azure Blob Storage container name")
-parser.add_argument("--sas", help="SAS token")
+parser.add_argument("--storagekey", help="Storage key token")
 args = parser.parse_args()
 
 default_creds = DefaultAzureCredential()
 
+storage_credential = (
+    AzureNamedKeyCredential(
+        name=args.storageaccount, key=args.storagekey
+    )
+)
+
 blob_service = BlobServiceClient(
     account_url=f"https://{args.storageaccount}.blob.core.windows.net",
-    credential=args.sas,
+    credential=storage_credential,
 )
 blob_container = blob_service.get_container_client(args.container)
 
