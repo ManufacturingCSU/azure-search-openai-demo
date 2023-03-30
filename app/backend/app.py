@@ -123,6 +123,7 @@ def content_file(path):
     filename_splits = content_filename.split("-")
     page_num = filename_splits[-1]
     source_filename =  "-".join(filename_splits[:-1]) + extension
+    print(source_filename)
     blob = source_blob_container.get_blob_client(source_filename).download_blob()
     mime_type = blob.properties["content_settings"]["content_type"]
     if mime_type == "application/octet-stream":

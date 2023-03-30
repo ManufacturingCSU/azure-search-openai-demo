@@ -116,9 +116,9 @@ module backend 'core/host/appservice.bicep' = {
     authClientSecret: authClientSecret
     authIssuerURI: environment().authentication.loginEndpoint
     appSettings: {
-      AZURE_BLOB_STORAGE_ACCOUNT: storage.outputs.name
-      AZURE_BLOB_STORAGE_CONTAINER: containerName
-      AZURE_SOURCE_BLOB_STORAGE_CONTAINER: inputContainerName
+      AZURE_STORAGE_ACCOUNT: storage.outputs.name
+      AZURE_STORAGE_CONTAINER: containerName
+      AZURE_SOURCE_STORAGE_ACCOUNT: inputContainerName
       AZURE_OPENAI_SERVICE: openAiServiceName
       AZURE_SEARCH_INDEX: searchIndexName
       AZURE_SEARCH_SERVICE: searchService.outputs.name
