@@ -21,7 +21,7 @@
       "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT}"
     },
     "gptDeploymentName": {
-      "value": "${AZURE_OPENAI_CHATGPT_DEPLOYMENT}"
+      "value": "${AZURE_OPENAI_GPT_DEPLOYMENT}"
     },
     "openAiResourceGroupName": {
       "value": "${AZURE_OPENAI_RESOURCE_GROUP}"

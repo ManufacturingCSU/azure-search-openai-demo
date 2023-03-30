@@ -4,7 +4,6 @@ $output = azd env get-values
 foreach ($line in $output) {
   $name, $value = $line.Split("=")
   $value = $value -replace '^\"|\"$'
-  Write-Host $name $value
   [Environment]::SetEnvironmentVariable($name, $value)
 }
 
