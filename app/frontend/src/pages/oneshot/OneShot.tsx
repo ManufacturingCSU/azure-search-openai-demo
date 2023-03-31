@@ -106,7 +106,7 @@ const OneShot = () => {
             setActiveCitation(citation);
             const pageNum = citation.split('.')[0].split("-").slice(-1).pop()
             if (pageNum) {
-                setActiveCitationPage(parseInt(pageNum));
+                setActiveCitationPage(parseInt(pageNum) + 1);
             }
             setActiveAnalysisPanelTab(AnalysisPanelTabs.CitationTab);
         }

@@ -16,7 +16,9 @@ from azure.storage.blob import BlobServiceClient
 # Replace these with your own values, either in environment variables or directly here
 AZURE_STORAGE_ACCOUNT = os.environ.get("AZURE_STORAGE_ACCOUNT") or "mystorageaccount"
 AZURE_STORAGE_CONTAINER = os.environ.get("AZURE_STORAGE_CONTAINER") or "content"
-AZURE_SOURCE_STORAGE_CONTAINER = os.environ.get("AZURE_SOURCE_STORAGE_CONTAINER") or "raw"
+AZURE_SOURCE_STORAGE_CONTAINER = (
+    os.environ.get("AZURE_SOURCE_STORAGE_CONTAINER") or "raw"
+)
 AZURE_SEARCH_SERVICE = os.environ.get("AZURE_SEARCH_SERVICE") or "gptkb"
 AZURE_SEARCH_INDEX = os.environ.get("AZURE_SEARCH_INDEX") or "gptkbindex"
 AZURE_OPENAI_SERVICE = os.environ.get("AZURE_OPENAI_SERVICE") or "myopenai"
@@ -122,7 +124,7 @@ def content_file(path):
     content_filename, extension = os.path.splitext(path)
     filename_splits = content_filename.split("-")
     page_num = filename_splits[-1]
-    source_filename =  "-".join(filename_splits[:-1]) + extension
+    source_filename = "-".join(filename_splits[:-1]) + extension
     print(source_filename)
     blob = source_blob_container.get_blob_client(source_filename).download_blob()
     mime_type = blob.properties["content_settings"]["content_type"]
@@ -131,7 +133,11 @@ def content_file(path):
     return (
         blob.readall(),
         200,
-        {"Content-Type": mime_type, "Content-Disposition": f"inline; filename={path}", "Page-Number": page_num},
+        {
+            "Content-Type": mime_type,
+            "Content-Disposition": f"inline; filename={path}",
+            "Page-Number": page_num,
+        },
     )
 
 
