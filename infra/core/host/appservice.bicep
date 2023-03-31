@@ -2,6 +2,12 @@ param name string
 param location string = resourceGroup().location
 param tags object = {}
 
+//Authentication
+param authClientId string
+@secure()
+param authClientSecret string
+param authIssuerURI string
+
 // Reference Properties
 param applicationInsightsName string = ''
 param appServicePlanId string
@@ -68,6 +74,7 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
       {
         SCM_DO_BUILD_DURING_DEPLOYMENT: string(scmDoBuildDuringDeployment)
         ENABLE_ORYX_BUILD: string(enableOryxBuild)
+        AUTH_CLIENT_SECRET: string(authClientSecret)
       },
       !empty(applicationInsightsName) ? { APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsights.properties.ConnectionString } : {},
       !empty(keyVaultName) ? { AZURE_KEY_VAULT_ENDPOINT: keyVault.properties.vaultUri } : {})
@@ -84,6 +91,26 @@ resource appService 'Microsoft.Web/sites@2022-03-01' = {
     dependsOn: [
       configAppSettings
     ]
+  }
+  
+  resource auth 'config' = {
+    name: 'authsettingsV2'
+    properties: {
+      globalValidation: {
+        requireAuthentication: true
+        unauthenticatedClientAction: 'Return401'
+      }
+      identityProviders: {
+        azureActiveDirectory: {
+          enabled: true
+          registration: {
+            clientId: authClientId
+            clientSecretSettingName: 'AUTH_CLIENT_SECRET'
+            openIdIssuer: authIssuerURI
+          }
+        }
+      }
+    }
   }
 }
 

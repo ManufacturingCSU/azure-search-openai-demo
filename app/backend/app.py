@@ -5,6 +5,7 @@ import logging
 import openai
 from flask import Flask, request, jsonify
 from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AzureKeyCredential, AzureNamedKeyCredential
 from azure.search.documents import SearchClient
 from approaches.retrievethenread import RetrieveThenReadApproach
 from approaches.readretrieveread import ReadRetrieveReadApproach
@@ -13,23 +14,40 @@ from approaches.chatreadretrieveread import ChatReadRetrieveReadApproach
 from azure.storage.blob import BlobServiceClient
 
 # Replace these with your own values, either in environment variables or directly here
-AZURE_BLOB_STORAGE_ACCOUNT = os.environ.get("AZURE_BLOB_STORAGE_ACCOUNT") or "mystorageaccount"
-AZURE_BLOB_STORAGE_CONTAINER = os.environ.get("AZURE_BLOB_STORAGE_CONTAINER") or "content"
+AZURE_STORAGE_ACCOUNT = os.environ.get("AZURE_STORAGE_ACCOUNT") or "mystorageaccount"
+AZURE_STORAGE_CONTAINER = os.environ.get("AZURE_STORAGE_CONTAINER") or "content"
+AZURE_SOURCE_STORAGE_CONTAINER = (
+    os.environ.get("AZURE_SOURCE_STORAGE_CONTAINER") or "raw"
+)
 AZURE_SEARCH_SERVICE = os.environ.get("AZURE_SEARCH_SERVICE") or "gptkb"
 AZURE_SEARCH_INDEX = os.environ.get("AZURE_SEARCH_INDEX") or "gptkbindex"
 AZURE_OPENAI_SERVICE = os.environ.get("AZURE_OPENAI_SERVICE") or "myopenai"
 AZURE_OPENAI_GPT_DEPLOYMENT = os.environ.get("AZURE_OPENAI_GPT_DEPLOYMENT") or "davinci"
-AZURE_OPENAI_CHATGPT_DEPLOYMENT = os.environ.get("AZURE_OPENAI_CHATGPT_DEPLOYMENT") or "chat"
+AZURE_OPENAI_CHATGPT_DEPLOYMENT = (
+    os.environ.get("AZURE_OPENAI_CHATGPT_DEPLOYMENT") or "chat"
+)
 
 KB_FIELDS_CONTENT = os.environ.get("KB_FIELDS_CONTENT") or "content"
 KB_FIELDS_CATEGORY = os.environ.get("KB_FIELDS_CATEGORY") or "category"
 KB_FIELDS_SOURCEPAGE = os.environ.get("KB_FIELDS_SOURCEPAGE") or "sourcepage"
 
-# Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed, 
-# just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the 
+# Use the current user identity to authenticate with Azure OpenAI, Cognitive Search and Blob Storage (no secrets needed,
+# just use 'az login' locally, and managed identity when deployed on Azure). If you need to use keys, use separate AzureKeyCredential instances with the
 # keys for each service
 # If you encounter a blocking error during a DefaultAzureCredntial resolution, you can exclude the problematic credential by using a parameter (ex. exclude_shared_token_cache_credential=True)
 azure_credential = DefaultAzureCredential()
+search_credential = (
+    AzureKeyCredential(os.getenv("AZURE_SEARCH_KEY"))
+    if os.getenv("AZURE_SEARCH_KEY")
+    else azure_credential
+)
+storage_credential = (
+    AzureNamedKeyCredential(
+        name=AZURE_STORAGE_ACCOUNT, key=os.getenv("AZURE_STORAGE_KEY")
+    )
+    if os.getenv("AZURE_STORAGE_KEY")
+    else azure_credential
+)
 
 # Used by the OpenAI SDK
 openai.api_type = "azure"
@@ -38,49 +56,91 @@ openai.api_version = "2022-12-01"
 
 # Comment these two lines out if using keys, set your API key in the OPENAI_API_KEY environment variable instead
 openai.api_type = "azure_ad"
-openai_token = azure_credential.get_token("https://cognitiveservices.azure.com/.default")
+openai_token = azure_credential.get_token(
+    "https://cognitiveservices.azure.com/.default"
+)
 openai.api_key = openai_token.token
 
 # Set up clients for Cognitive Search and Storage
 search_client = SearchClient(
     endpoint=f"https://{AZURE_SEARCH_SERVICE}.search.windows.net",
     index_name=AZURE_SEARCH_INDEX,
-    credential=azure_credential)
+    credential=search_credential,
+)
 blob_client = BlobServiceClient(
-    account_url=f"https://{AZURE_BLOB_STORAGE_ACCOUNT}.blob.core.windows.net", 
-    credential=azure_credential)
-blob_container = blob_client.get_container_client(AZURE_BLOB_STORAGE_CONTAINER)
+    account_url=f"https://{AZURE_STORAGE_ACCOUNT}.blob.core.windows.net",
+    credential=storage_credential,
+)
+content_blob_container = blob_client.get_container_client(AZURE_STORAGE_CONTAINER)
+source_blob_container = blob_client.get_container_client(AZURE_SOURCE_STORAGE_CONTAINER)
 
 # Various approaches to integrate GPT and external knowledge, most applications will use a single one of these patterns
 # or some derivative, here we include several for exploration purposes
 ask_approaches = {
-    "rtr": RetrieveThenReadApproach(search_client, AZURE_OPENAI_GPT_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT),
-    "rrr": ReadRetrieveReadApproach(search_client, AZURE_OPENAI_GPT_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT),
-    "rda": ReadDecomposeAsk(search_client, AZURE_OPENAI_GPT_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT)
+    "rtr": RetrieveThenReadApproach(
+        search_client,
+        AZURE_OPENAI_GPT_DEPLOYMENT,
+        KB_FIELDS_SOURCEPAGE,
+        KB_FIELDS_CONTENT,
+    ),
+    "rrr": ReadRetrieveReadApproach(
+        search_client,
+        AZURE_OPENAI_GPT_DEPLOYMENT,
+        KB_FIELDS_SOURCEPAGE,
+        KB_FIELDS_CONTENT,
+    ),
+    "rda": ReadDecomposeAsk(
+        search_client,
+        AZURE_OPENAI_GPT_DEPLOYMENT,
+        KB_FIELDS_SOURCEPAGE,
+        KB_FIELDS_CONTENT,
+    ),
 }
 
 chat_approaches = {
-    "rrr": ChatReadRetrieveReadApproach(search_client, AZURE_OPENAI_CHATGPT_DEPLOYMENT, AZURE_OPENAI_GPT_DEPLOYMENT, KB_FIELDS_SOURCEPAGE, KB_FIELDS_CONTENT)
+    "rrr": ChatReadRetrieveReadApproach(
+        search_client,
+        AZURE_OPENAI_CHATGPT_DEPLOYMENT,
+        AZURE_OPENAI_GPT_DEPLOYMENT,
+        KB_FIELDS_SOURCEPAGE,
+        KB_FIELDS_CONTENT,
+    )
 }
 
 app = Flask(__name__)
+
 
 @app.route("/", defaults={"path": "index.html"})
 @app.route("/<path:path>")
 def static_file(path):
     return app.send_static_file(path)
 
-# Serve content files from blob storage from within the app to keep the example self-contained. 
+
+# Serve content files from blob storage from within the app to keep the example self-contained.
 # *** NOTE *** this assumes that the content files are public, or at least that all users of the app
 # can access all the files. This is also slow and memory hungry.
 @app.route("/content/<path>")
 def content_file(path):
-    blob = blob_container.get_blob_client(path).download_blob()
+    content_filename, extension = os.path.splitext(path)
+    filename_splits = content_filename.split("-")
+    page_num = filename_splits[-1]
+    source_filename = "-".join(filename_splits[:-1]) + extension
+    print(source_filename)
+    blob = source_blob_container.get_blob_client(source_filename).download_blob()
     mime_type = blob.properties["content_settings"]["content_type"]
     if mime_type == "application/octet-stream":
         mime_type = mimetypes.guess_type(path)[0] or "application/octet-stream"
-    return blob.readall(), 200, {"Content-Type": mime_type, "Content-Disposition": f"inline; filename={path}"}
-    
+    return (
+        blob.readall(),
+        200,
+        {
+            "Content-Type": mime_type,
+            "Content-Disposition": f"inline; filename={path}",
+            "Page-Number": page_num,
+        },
+    )
+
+
 @app.route("/ask", methods=["POST"])
 def ask():
     ensure_openai_token()
@@ -94,7 +154,8 @@ def ask():
     except Exception as e:
         logging.exception("Exception in /ask")
         return jsonify({"error": str(e)}), 500
-    
+
+
 @app.route("/chat", methods=["POST"])
 def chat():
     ensure_openai_token()
@@ -109,11 +170,15 @@ def chat():
         logging.exception("Exception in /chat")
         return jsonify({"error": str(e)}), 500
 
+
 def ensure_openai_token():
     global openai_token
     if openai_token.expires_on < int(time.time()) - 60:
-        openai_token = azure_credential.get_token("https://cognitiveservices.azure.com/.default")
+        openai_token = azure_credential.get_token(
+            "https://cognitiveservices.azure.com/.default"
+        )
         openai.api_key = openai_token.token
-    
+
+
 if __name__ == "__main__":
     app.run()

@@ -29,6 +29,7 @@ const Chat = () => {
     const [error, setError] = useState<unknown>();
 
     const [activeCitation, setActiveCitation] = useState<string>();
+    const [activeCitationPage, setActiveCitationPage] = useState<number>();
     const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
 
     const [selectedAnswer, setSelectedAnswer] = useState<number>(0);
@@ -40,6 +41,7 @@ const Chat = () => {
         error && setError(undefined);
         setIsLoading(true);
         setActiveCitation(undefined);
+        setActiveCitationPage(undefined);
         setActiveAnalysisPanelTab(undefined);
 
         try {
@@ -69,6 +71,7 @@ const Chat = () => {
         lastQuestionRef.current = "";
         error && setError(undefined);
         setActiveCitation(undefined);
+        setActiveCitationPage(undefined);
         setActiveAnalysisPanelTab(undefined);
         setAnswers([]);
     };
@@ -108,6 +111,10 @@ const Chat = () => {
             setActiveAnalysisPanelTab(undefined);
         } else {
             setActiveCitation(citation);
+            const pageNum = citation.split('.')[0].split("-").slice(-1).pop()
+            if (pageNum) {
+                setActiveCitationPage(parseInt(pageNum) + 1);
+            }
             setActiveAnalysisPanelTab(AnalysisPanelTabs.CitationTab);
         }
 
@@ -192,6 +199,7 @@ const Chat = () => {
                     <AnalysisPanel
                         className={styles.chatAnalysisPanel}
                         activeCitation={activeCitation}
+                        activeCitationPage={activeCitationPage}
                         onActiveTabChanged={x => onToggleTab(x, selectedAnswer)}
                         citationHeight="810px"
                         answer={answers[selectedAnswer][1]}

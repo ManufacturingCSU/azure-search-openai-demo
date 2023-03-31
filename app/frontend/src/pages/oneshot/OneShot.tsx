@@ -28,6 +28,7 @@ const OneShot = () => {
     const [answer, setAnswer] = useState<AskResponse>();
 
     const [activeCitation, setActiveCitation] = useState<string>();
+    const [activeCitationPage, setActiveCitationPage] = useState<number>();
     const [activeAnalysisPanelTab, setActiveAnalysisPanelTab] = useState<AnalysisPanelTabs | undefined>(undefined);
 
     const makeApiRequest = async (question: string) => {
@@ -36,6 +37,7 @@ const OneShot = () => {
         error && setError(undefined);
         setIsLoading(true);
         setActiveCitation(undefined);
+        setActiveCitationPage(undefined);
         setActiveAnalysisPanelTab(undefined);
 
         try {
@@ -102,6 +104,10 @@ const OneShot = () => {
             setActiveAnalysisPanelTab(undefined);
         } else {
             setActiveCitation(citation);
+            const pageNum = citation.split('.')[0].split("-").slice(-1).pop()
+            if (pageNum) {
+                setActiveCitationPage(parseInt(pageNum) + 1);
+            }
             setActiveAnalysisPanelTab(AnalysisPanelTabs.CitationTab);
         }
     };
@@ -164,6 +170,7 @@ const OneShot = () => {
                     <AnalysisPanel
                         className={styles.oneshotAnalysisPanel}
                         activeCitation={activeCitation}
+                        activeCitationPage={activeCitationPage}
                         onActiveTabChanged={x => onToggleTab(x)}
                         citationHeight="600px"
                         answer={answer}
