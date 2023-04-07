@@ -39,6 +39,7 @@ param containerName string = 'content'
 param openAiServiceName string = ''
 param openAiResourceGroupName string = ''
 param openAiResourceGroupLocation string = location
+param openAiSubscriptionId string = subscription().id
 
 param openAiSkuName string = 'S0'
 
@@ -69,6 +70,7 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 
 resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(openAiResourceGroupName)) {
   name: !empty(openAiResourceGroupName) ? openAiResourceGroupName : resourceGroup.name
+  scope: subscription(openAiSubscriptionId)
 }
 
 resource formRecognizerResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(formRecognizerResourceGroupName)) {
@@ -128,51 +130,42 @@ module backend 'core/host/appservice.bicep' = {
   }
 }
 
-resource rgCognitiveServices 'Microsoft.Resources/resourceGroups@2021-04-01' existing = {
-  name: openAiResourceGroupName
+module openAi 'core/ai/cognitiveservices.bicep' = {
+  name: 'openai'
+  scope: openAiResourceGroup
+  params: {
+    name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
+    location: openAiResourceGroupLocation
+    tags: tags
+    sku: {
+      name: openAiSkuName
+    }
+    deployments: [
+      {
+        name: gptDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: gptModelName
+          version: '1'
+        }
+        scaleSettings: {
+          scaleType: 'Standard'
+        }
+      }
+      {
+        name: chatGptDeploymentName
+        model: {
+          format: 'OpenAI'
+          name: chatGptModelName
+          version: '0301'
+        }
+        scaleSettings: {
+          scaleType: 'Standard'
+        }
+      }
+    ]
+  }
 }
-
-resource cognitiveServices 'Microsoft.CognitiveServices/accounts@2022-10-01' existing = {
-  name: openAiServiceName
-  scope: az.resourceGroup(openAiResourceGroupName)
-}
-
-// module openAi 'core/ai/cognitiveservices.bicep' = {
-//   name: 'openai'
-//   scope: openAiResourceGroup
-//   params: {
-//     name: !empty(openAiServiceName) ? openAiServiceName : '${abbrs.cognitiveServicesAccounts}${resourceToken}'
-//     location: openAiResourceGroupLocation
-//     tags: tags
-//     sku: {
-//       name: openAiSkuName
-//     }
-//     deployments: [
-//       {
-//         name: gptDeploymentName
-//         model: {
-//           format: 'OpenAI'
-//           name: gptModelName
-//           version: '1'
-//         }
-//         scaleSettings: {
-//           scaleType: 'Standard'
-//         }
-//       }
-//       {
-//         name: chatGptDeploymentName
-//         model: {
-//           format: 'OpenAI'
-//           name: chatGptModelName
-//           version: '0301'
-//         }
-//         scaleSettings: {
-//           scaleType: 'Standard'
-//         }
-//       }
-//     ]
-//   }
-// }
 
 module formrecognizer 'core/ai/formrecognizer.bicep' = {
   name: 'formrecognizer'
@@ -370,7 +363,7 @@ module searchRoleBackend 'core/security/role.bicep' = {
 
 output AZURE_LOCATION string = location
 output FUNCTION_APP_NAME string = functionApp.outputs.functionName 
-output AZURE_OPENAI_SERVICE string = openAiServiceName
+output AZURE_OPENAI_SERVICE string = openAi.name
 output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
 
