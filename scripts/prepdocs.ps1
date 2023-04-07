@@ -20,6 +20,9 @@ $searchKey = az search admin-key show --resource-group $env:AZURE_RESOURCE_GROUP
 Write-Host $apiKey
 Write-Host $connString
 
+Write-Host 'Installing dependencies from "requirements.txt" into virtual environment'
+Start-Process -FilePath $venvPythonPath -ArgumentList "-m pip install -r ./scripts/requirements.txt" -Wait -NoNewWindow
+
 $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
 if (-not $pythonCmd) {
   # fallback to python3 if python not found
@@ -34,9 +37,6 @@ if (Test-Path -Path "/usr") {
   # fallback to Linux venv path
   $venvPythonPath = "./scripts/.venv/bin/python"
 }
-
-Write-Host 'Installing dependencies from "requirements.txt" into virtual environment'
-Start-Pruuuuuuuocess -FilePath $venvPythonPath -ArgumentList "-m pip install -r ./scripts/requirements.txt" -Wait -NoNewWindow
 
 Write-Host 'Running "prepdocs.py"'
 $cwd = (Get-Location)
