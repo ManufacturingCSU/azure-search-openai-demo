@@ -16,7 +16,7 @@ Current additional modifications provided in this project:
 4. Full source PDF display (rather than single page) in web app citation view
 
 ## Additional Setup
-Deployment of the Azure FunctionApp requires Azure Functions Core Tools to be installed in the deployment environment. Information about installation can be found here [Work with Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Ccsharp%2Cportal%2Cbash).
+Deployment of the Azure FunctionApp requires Azure Functions Core Tools and Azure CLI to be installed in the deployment environment. Information about installation can be found  here: [Work with Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Ccsharp%2Cportal%2Cbash) and [Install Azure CLI on Windows](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-windows?tabs=azure-cli).
 
 ## Enabling Authentication
 
