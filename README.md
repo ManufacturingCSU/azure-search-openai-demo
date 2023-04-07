@@ -7,26 +7,18 @@
 
 This repository modifies the demo application hosted at [https://github.com/Azure-Samples/azure-search-openai-demo](https://github.com/Azure-Samples/azure-search-openai-demo). It is the intent of this project to continually incorporate any upstream changes along with the original additions made in this fork, but there may delays and conflicts in this process.
 
-## Project Additions
+## Additions
 Current additional modifications provided in this project:
 
-1. Requirement for existing OpenAI deployment
-2. Index source documents hosted in Azure Blob Storage (Defaults to 'raw' container within created Azure Storage Account)
-3. On-going indexing and index administration through an Azure FunctionApp
-4. Frontend authentication enabled by default
-5. Full source PDF display (rather than single page) in web app citation view
+1. Index source documents hosted in Azure Blob Storage (Defaults to 'raw' container within created Azure Storage Account)
+2. On-going indexing and index administration through an Azure FunctionApp
+3. Frontend authentication enabled by default
+4. Full source PDF display (rather than single page) in web app citation view
 
 ## Additional Setup
 Deployment of the Azure FunctionApp requires Azure Functions Core Tools to be installed in the deployment environment. Information about installation can be found here [Work with Azure Functions Core Tools](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local?tabs=v4%2Cwindows%2Ccsharp%2Cportal%2Cbash).
 
-The use of an existing OpenAI deployment requires the deploying user to set four environmental variables.
-
-```
-azd env set AZURE_OPENAI_SERVICE <YOUR_OPENAI_SERVICE_NAME>
-azd env set AZURE_OPENAI_CHATGPT_DEPLOYMENT <YOUR_OPENAI_CHATPGT_DEPLOYMENT>
-azd env set AZURE_OPENAI_GPT_DEPLOYMENT <YOUR_OPENAI_GPT_DEPLOYMENT>
-azd env set AZURE_OPENAI_RESOURCE_GROUP <YOUR_OPENAI_RESOURCE_GROUP>
-```
+## Enabling Authentication
 
 This application enables Azure Active Directory authentication. This requires an Azure App Registration within the Azure tenant used for deployment. Please see this tutorial for more information on registering an application [Register Application](https://learn.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app). To be used for authenticating the app service, the application must have `User.Read` permissions. Once registered, the application client Id and client secret can be configured for the Bicep deployment below.
 
@@ -36,6 +28,12 @@ azd env set AUTH_CLIENT_SECRET <APP_CLIENT_SECRET>
 azd env set AUTH_TENANT_ID <APP_TENANT_ID>
 ```
 
+The App Registration must include the redirect URI for your deployed application. After app deployment, navigate to your App Registration and select Authentication in the sidebar menu. From here, click "Add a platform" under Platform configurations. Add a "Web" platform configuration with a Redirect URI of `https://<YOUR_BACKEND_SERVICE_NAME>.azurewebsites.net/.auth/login/aad/callback`.
+
+
+## Azure Permissions
+
+To use the Azure Developer CLI for deployment, the Azure credentials used for deployment must have permissions for `Microsoft.Resources/deployments*` at the Subscription level.
 
 # Upstream Documentation
 
