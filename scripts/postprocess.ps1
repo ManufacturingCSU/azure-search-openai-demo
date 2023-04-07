@@ -20,6 +20,7 @@ $storageKey=$(az storage account keys list -g $env:AZURE_RESOURCE_GROUP -n $env:
 
 
 Write-Host "Creating search index"
+pip install -r ./scripts/requirements.txt
 python ./scripts/create_index.py --searchservice $env:AZURE_SEARCH_SERVICE --index $env:AZURE_CHAT_SEARCH_INDEX --searchkey $searchKey
 
 Write-Host "Publishing FunctionApp"
@@ -45,7 +46,6 @@ try {
 
 Write-Host "Uploading local data"
 
-pip install -r ./scripts/requirements.txt
 python ./scripts/upload_data.py './data/*' --storageaccount $env:AZURE_STORAGE_ACCOUNT --container raw --storagekey $storageKey
 
 # Write-Host "Set local search key"
