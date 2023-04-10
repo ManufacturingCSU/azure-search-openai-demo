@@ -36,7 +36,7 @@ param storageResourceGroupLocation string = location
 
 param containerName string = 'content'
 
-param openAiServiceName string = ''
+param openAiServiceName string = 'testinstance'
 param openAiResourceGroupName string = ''
 param openAiResourceGroupLocation string = location
 
