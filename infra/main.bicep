@@ -39,7 +39,6 @@ param containerName string = 'content'
 param openAiServiceName string = ''
 param openAiResourceGroupName string = ''
 param openAiResourceGroupLocation string = location
-param openAiSubscriptionId string = subscription().id
 
 param openAiSkuName string = 'S0'
 
@@ -70,7 +69,6 @@ resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
 
 resource openAiResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(openAiResourceGroupName)) {
   name: !empty(openAiResourceGroupName) ? openAiResourceGroupName : resourceGroup.name
-  scope: subscription(openAiSubscriptionId)
 }
 
 resource formRecognizerResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' existing = if (!empty(formRecognizerResourceGroupName)) {
